@@ -44,3 +44,12 @@ SCROLL_DELAY = 500
 
 # scroll_to_top
 SCROLL_TOP_DELAY = 300
+
+# ============================
+# Output files
+# ============================
+FILENAME_CSV = f"youtube_charts_{DATE}.csv"
+FILEPATH_CSV = DATA_DIR / FILENAME_CSV
+
+FILENAME_JSON = f"youtube_charts_{DATE}.json"
+FILEPATH_JSON = DATA_DIR / FILENAME_JSON
