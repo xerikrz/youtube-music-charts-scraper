@@ -1,0 +1,81 @@
+name: youtube-music-charts-scraper
+
+on:
+  push:
+    branches:
+      - deploy 
+  schedule:
+    - cron: '59 23 * * 0'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Cache uv environment
+        uses: actions/cache@v3
+        with:
+          path: .uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Initialize uv
+        run: uv venv
+
+      - name: Install Dependencies
+        run: uv pip install -r pyproject.toml
+
+      - name: Install Chromium
+        run: uv run playwright install chromium
+
+      - name: Run Scraper
+        run: |
+          source .venv/bin/activate
+          cd src && python3 main.py
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add, Commit and Push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git add .
+          DATE=$(date +%Y-%m-%d)
+          git commit -m "chore(data): add results - $DATE" || echo "No changes to commit"
+          git push origin HEAD:deploy || echo "Nothing to push"
