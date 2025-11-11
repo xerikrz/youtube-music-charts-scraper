@@ -9,6 +9,7 @@ import random
 
 from config import (
     HEADLESS,
+    VIEWPORT,
     DEFAULT_WAIT,
     RANDOMIZE,
     RANDOM_WAIT_MIN,
